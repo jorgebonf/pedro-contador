@@ -4,7 +4,6 @@
   "short_name": "Pedro",
   "description": "Controle pessoal de despesas, contas fixas e dashboards mensais e anuais.",
   "lang": "pt-BR",
-  "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

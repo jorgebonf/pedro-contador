@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Pedro · O Contador | Controle de despesas</title>
 <meta name="theme-color" content="#0E2A3A">
 <meta name="description" content="Pedro · O Contador: controle de despesas, contas fixas e dashboards.">
@@ -101,7 +101,12 @@ body.dark .pill.teal{color:#5FE0D0}body.dark .pill.amber{color:#F5BE77}body.dark
 .bill .d{background:var(--chip);border-radius:11px;text-align:center;padding:5px 0;font-weight:800;font-size:15px;line-height:1.1}.bill .d small{display:block;font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
 .bill.late .d{background:rgba(209,92,102,.15);color:var(--red)}.bill.paid{opacity:.6}
 details.imp{border:1px solid var(--line);border-radius:14px;padding:12px 15px;margin-bottom:16px;background:var(--card2)}details.imp summary{cursor:pointer;font-weight:700}details.imp[open] summary{margin-bottom:10px}
+html,body{overflow-x:hidden;max-width:100%}body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html.lock,html.lock body{overflow:hidden;overscroll-behavior:none}
+.modalback{overscroll-behavior:contain}.modal{overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.field input,.field select,.field textarea{max-width:100%;width:100%}.formgrid>*{min-width:0}
 @media(max-width:1150px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.grid3,.hero{grid-template-columns:1fr}.insights{grid-template-columns:1fr}.sidebar{width:214px}}
+@media(max-width:700px){input,select,textarea,.field input,.field select,.field textarea,.filters input,.filters select,.monthbar input{font-size:16px!important}.bigamount input{font-size:28px!important}input[type=date],input[type=month]{-webkit-appearance:none;appearance:none;min-height:44px}.modalback{align-items:flex-end;padding:0}.modal{border-radius:22px 22px 0 0;max-height:92vh;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}.filters input[type=search],#expenseSearch{min-width:0;width:100%}.toast{left:12px;right:12px;bottom:16px;text-align:center}}
 @media(max-width:700px){.shell{display:block}.sidebar{width:100%;height:auto;position:static;padding:12px;gap:10px}.nav{display:flex;overflow-x:auto}.nav button{white-space:nowrap;padding:9px}.sidebottom{flex-direction:row;display:flex}.sidenote{display:none}.main{padding:20px 14px 50px}.top{display:block}.top .actions{margin-top:14px}.cards{gap:8px}.donutrow{flex-direction:column;align-items:stretch}.donutrow svg{align-self:center}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.bill{grid-template-columns:44px 1fr}.hero .big{font-size:32px}}
 
 </style>
@@ -165,8 +170,8 @@ function renderSettings(){$('#budgetInput').value=db.budget?fmtAmt(db.budget):''
 function render(){if(page==='dashboard')renderDash();if(page==='expenses')renderExpenses();if(page==='fixed')renderFixed();if(page==='history')renderHistory();if(page==='annual')renderAnnual();if(page==='all')renderAll();if(page==='settings')renderSettings()}
 const meta={dashboard:['Visão mensal','Entenda para onde vai o seu dinheiro.'],expenses:['Despesas','Todos os lançamentos, em uma base consultável.'],fixed:['Contas fixas','Recorrência sem retrabalho e com controle por mês.'],history:['Mês a mês','Compare a evolução de suas despesas.'],annual:['Visão anual','Acompanhe os doze meses de cada ano.'],all:['Consolidado','O histórico completo em uma única visão.'],settings:['Categorias e dados','Personalize e proteja sua base.']};
 function navigate(p){page=p;document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));$('#pageTitle').textContent=meta[p][0];$('#pageSub').textContent=meta[p][1];render();window.scrollTo({top:0,behavior:'smooth'})}
-function openModal(title,body,handler){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modalBack').classList.add('show');$('#modalBody form').addEventListener('submit',e=>{e.preventDefault();handler(new FormData(e.target),!!(e.submitter&&e.submitter.name==='again'))});setTimeout(()=>{let f=$('#modalBody .bigamount input')||$('#modalBody input:not([type=hidden])');f?.focus();if(f&&f.select)f.select()},40)}
-function closeModal(){$('#modalBack').classList.remove('show');$('#modalBody').innerHTML=''}
+function openModal(title,body,handler){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modalBack').classList.add('show');document.documentElement.classList.add('lock');$('#modalBack .modal').scrollTop=0;$('#modalBody form').addEventListener('submit',e=>{e.preventDefault();handler(new FormData(e.target),!!(e.submitter&&e.submitter.name==='again'))});if(matchMedia('(hover:hover) and (pointer:fine)').matches)setTimeout(()=>{let f=$('#modalBody .bigamount input')||$('#modalBody input:not([type=hidden])');f?.focus();if(f&&f.select)f.select()},40)}
+function closeModal(){$('#modalBack').classList.remove('show');document.documentElement.classList.remove('lock');$('#modalBody').innerHTML=''}
 function footer(){return '<div class="formfooter"><button class="btn" type="button" id="cancelModal">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>'}
 function amountCents(v){let n=Number(v);return Number.isFinite(n)&&n>0&&n<1000000000?Math.round(n*100):null}
 function expenseForm(id,copyId){let x=db.expenses.find(e=>e.id===(id||copyId)),d=id&&x?x.date:((selected===MONTH())?TODAY():selected+'-01'),cs=x?.categoryId||PREF.lastCat||db.categories[0]?.id;if(!db.categories.some(c=>c.id===cs))cs=db.categories[0]?.id;let me=x?(x.method||''):(PREF.lastMethod||''),na=x?.nature||'Variável',chips=(name,arr,val)=>`<input type="hidden" name="${name}" value="${esc(val)}"><div class="chips" data-chips="${name}">${arr.map(([v,t])=>`<button type="button" data-v="${esc(v)}" class="${v===val?'on':''}">${esc(t)}</button>`).join('')}</div>`;
@@ -200,20 +205,23 @@ document.addEventListener('click',e=>{let g=e.target.closest('[data-goto]');if(g
 $('#addExpense2').onclick=()=>expenseForm();$('#goToday').onclick=()=>{$('#monthPick').value=MONTH();$('#monthPick').dispatchEvent(new Event('change'))};$('#expenseSource').addEventListener('change',renderExpenses);
 $('#saveBudget').onclick=()=>{let r=$('#budgetInput').value.trim(),v=0;if(r){v=parseTemplateAmount(r);if(!v)return toast('Informe um valor válido, ex.: 6.500,00')}db.budget=v;persist();renderSettings();toast(v?'Orçamento salvo: '+money(v):'Orçamento removido')};
 document.addEventListener('keydown',e=>{if(e.altKey&&(e.key==='n'||e.key==='N')){e.preventDefault();expenseForm()}});
+['gesturestart','gesturechange'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
+let lastTouch=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTouch<300&&!e.target.closest('input,textarea,select'))e.preventDefault();lastTouch=n},{passive:false});
 })();
 </script>
 <script>
 (()=>{'use strict';
 const btn=document.getElementById('installPedro'),st=document.getElementById('pwaStatus');let dp=null;
 const inst=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-const say=m=>{if(st)st.textContent=m};
+const say=m=>{if(st)st.textContent=m};const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
 if(new URLSearchParams(location.search).get('nova')==='1'){setTimeout(()=>document.getElementById('addExpenseTop')?.click(),300);history.replaceState(null,'',location.pathname)}
 if(inst())say('📲 Pedro instalado como aplicativo. Funciona offline; seus dados ficam neste dispositivo.');
 else if(location.protocol==='file:')say('Abrindo como arquivo local: publique em HTTPS para instalar como aplicativo.');
-else if(/iphone|ipad|ipod/i.test(navigator.userAgent))say('No iPhone/iPad: toque em Compartilhar ⬆ e em “Adicionar à Tela de Início”.');
+else if(ios)say('No iPhone/iPad: toque em Compartilhar ⬆ e em “Adicionar à Tela de Início”.');
 if('serviceWorker' in navigator&&window.isSecureContext&&location.protocol!=='file:'){
  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(r=>{
-  if(!inst()&&!/iphone|ipad|ipod/i.test(navigator.userAgent))say('Modo offline ativo. Use “Instalar Pedro” ou o menu do navegador para instalar.');
+  if(!inst()&&!ios)say('Modo offline ativo. Use “Instalar Pedro” ou o menu do navegador para instalar.');
   r.addEventListener('updatefound',()=>{const w=r.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)say('Nova versão do Pedro disponível: feche e abra o app para atualizar.')})});
  }).catch(()=>say('Não foi possível ativar o modo offline. Confira se sw.js foi publicado junto com index.html.')));
 }
@@ -221,5 +229,4 @@ addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(btn&&!inst
 btn?.addEventListener('click',async()=>{if(!dp)return;const p=dp;dp=null;btn.hidden=true;try{await p.prompt();await p.userChoice}catch(_){}});
 addEventListener('appinstalled',()=>{dp=null;if(btn)btn.hidden=true;say('📲 Pedro instalado! Procure o ícone na tela inicial ou no menu Iniciar.')});
 })();
-
 </script></body></html>
